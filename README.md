@@ -1,36 +1,94 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Samelony — custom furniture, made to order
 
-## Getting Started
+A Next.js app for a custom-furniture dropshipping business: customers describe
+(and optionally sketch) the furniture they want, get an AI-assisted design
+brief, receive a quote, approve it and pay a deposit, and get progress updates
+while their piece is manufactured — with the long-term intent of routing
+production through vetted manufacturing partners in Vietnam.
 
-First, run the development server:
+## What's built
+
+**Customer side**
+- `/` — landing page explaining the flow.
+- `/design` — submission form: furniture type, dimensions, materials, budget,
+  free-text description, and file uploads (sketches, photos, inspiration
+  images, PDFs). Includes an optional "Preview AI brief" button.
+- `/orders/[id]` — order status page: status stepper (New → Reviewing →
+  Quoted → Approved → Manufacturing → Completed), the submitted spec and
+  files, the AI brief, the quote once one exists, buttons to approve/request
+  changes, a "Pay deposit" button, and a feed of production updates with
+  photos.
+- `/track` — simple lookup by order ID/link.
+
+**Admin side** (password-protected)
+- `/admin` — table of all design requests.
+- `/admin/orders/[id]` — full request detail, status controls, a quote
+  builder (manufacturing/materials/labor/delivery/margin/deposit/production
+  time), and a form to post production updates with photos.
+
+**AI assist**
+- `src/lib/ai.ts` calls the Anthropic API to turn a customer's free-text
+  description into a structured design brief (category, materials,
+  dimensions, style, complexity, clarifying questions). Used both for the
+  live "Preview AI brief" button and automatically on submission. Gracefully
+  no-ops if `ANTHROPIC_API_KEY` isn't set.
+
+**Payments**
+- The deposit flow is Stripe-ready (`src/app/api/orders/[id]/deposit`,
+  `src/app/api/stripe/webhook`): with `STRIPE_SECRET_KEY` set it creates a
+  real Stripe Checkout session; the webhook confirms payment and marks the
+  deposit paid. Without a Stripe key it falls back to a **demo mode** that
+  marks the deposit paid immediately, so you can exercise the whole flow
+  without a payment processor configured.
+
+## Getting started
 
 ```bash
+npm install
+cp .env.example .env.local   # fill in at least ADMIN_PASSWORD
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). Visit `/admin/login` to
+sign into the dashboard.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+See `.env.example`. Only `ADMIN_PASSWORD` is required to use the admin
+dashboard; `ANTHROPIC_API_KEY` and the `STRIPE_*` vars are optional and the
+app degrades gracefully without them.
 
-## Learn More
+## Known limitations (by design, for an MVP)
 
-To learn more about Next.js, take a look at the following resources:
+- **Storage**: orders and quotes are persisted to a JSON file at
+  `.data/orders.json`, and uploaded files are saved under
+  `public/uploads/<orderId>/`. This is simple and fine for local dev or a
+  single always-on server, but it will **not** work on stateless/serverless
+  deployments (e.g. Vercel) where the filesystem isn't persistent or shared
+  across instances. Before going to production, swap `src/lib/orders.ts` for
+  a real database (Postgres/Supabase/etc.) and `src/lib/uploads.ts` for
+  object storage (S3, Cloudinary, etc.).
+- **Order links are the auth**: customers reach their order via an
+  unguessable UUID in the URL rather than a login. Fine for an MVP demo, but
+  consider emailing magic links or adding real customer accounts later.
+- **Admin auth** is a single shared password (`ADMIN_PASSWORD`), not
+  per-user accounts. Fine for one or two operators; add real auth
+  (e.g. NextAuth) before adding more staff.
+- **No email notifications** yet — customers have to revisit their order
+  link to see status changes.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Roadmap toward the dropshipping / Vietnam-manufacturing model
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- A manufacturer directory (multiple Vietnam partners, their specialties,
+  lead times, MOQs) and a way to route/send an approved spec + AI brief to a
+  specific manufacturer as an RFQ.
+- Splitting one customer order across manufacturers/SKUs if it combines
+  multiple pieces.
+- Logistics: freight/customs handling from the manufacturer to the customer,
+  and surfacing shipping status in the order-tracking page.
+- Real image generation (not just a text brief) so customers can see a
+  visual concept before quoting.
+- Email/SMS notifications on status changes instead of requiring customers
+  to check their order link.
+- Multi-operator admin accounts and roles (sales/ops vs. manufacturing
+  liaison).

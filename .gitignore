@@ -36,6 +36,11 @@ yarn-error.log*
 # vercel
 .vercel
 
+# runtime data (orders store + uploaded reference/progress files)
+/.data/
+/public/uploads/*
+!/public/uploads/.gitkeep
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
