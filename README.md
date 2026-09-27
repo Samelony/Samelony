@@ -41,6 +41,19 @@ production through vetted manufacturing partners in Vietnam.
   marks the deposit paid immediately, so you can exercise the whole flow
   without a payment processor configured.
 
+**Email notifications**
+- `src/lib/email.ts` emails you (via [Resend](https://resend.com)) the full
+  spec — customer info, dimensions, materials, description, AI summary, link
+  to the admin page — the moment someone submits a design. Set it up:
+  1. Create your business email (any provider — Gmail, Google Workspace,
+     etc.) if you haven't yet.
+  2. Sign up at [resend.com](https://resend.com) (free tier covers this) and
+     create an API key.
+  3. Set `RESEND_API_KEY` to that key and `NOTIFY_EMAIL` to your business
+     email address.
+  Without these two set, submissions still work — you just won't get an
+  email and will need to check `/admin` instead.
+
 ## Getting started
 
 ```bash
@@ -55,7 +68,8 @@ sign into the dashboard.
 ### Environment variables
 
 See `.env.example`. Only `ADMIN_PASSWORD` is required to use the admin
-dashboard; `ANTHROPIC_API_KEY` and the `STRIPE_*` vars are optional and the
+dashboard; `ANTHROPIC_API_KEY`, the `STRIPE_*` vars, and the email vars
+(`RESEND_API_KEY`, `NOTIFY_EMAIL`, `EMAIL_FROM`) are all optional and the
 app degrades gracefully without them.
 
 ## Known limitations (by design, for an MVP)
@@ -74,8 +88,9 @@ app degrades gracefully without them.
 - **Admin auth** is a single shared password (`ADMIN_PASSWORD`), not
   per-user accounts. Fine for one or two operators; add real auth
   (e.g. NextAuth) before adding more staff.
-- **No email notifications** yet — customers have to revisit their order
-  link to see status changes.
+- **Customer-facing status emails**: you now get emailed on new submissions
+  (see above), but customers still have to revisit their order link to see
+  status changes — no "your quote is ready" email to them yet.
 
 ## Roadmap toward the dropshipping / Vietnam-manufacturing model
 
@@ -88,7 +103,7 @@ app degrades gracefully without them.
   and surfacing shipping status in the order-tracking page.
 - Real image generation (not just a text brief) so customers can see a
   visual concept before quoting.
-- Email/SMS notifications on status changes instead of requiring customers
-  to check their order link.
+- Customer-facing email/SMS notifications on status changes (quote ready,
+  approved, shipped) — right now only you get emailed, on submission.
 - Multi-operator admin accounts and roles (sales/ops vs. manufacturing
   liaison).

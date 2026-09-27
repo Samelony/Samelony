@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createOrder } from "@/lib/orders";
 import { saveUploadedFiles } from "@/lib/uploads";
 import { generateDesignBrief, isAiConfigured } from "@/lib/ai";
+import { isEmailConfigured, sendNewOrderNotification } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
@@ -72,6 +73,14 @@ export async function POST(req: NextRequest) {
     },
     orderId
   );
+
+  if (isEmailConfigured()) {
+    try {
+      await sendNewOrderNotification(order);
+    } catch (err) {
+      console.error("Order notification email failed", err);
+    }
+  }
 
   return NextResponse.json({ order }, { status: 201 });
 }
