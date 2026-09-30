@@ -1,4 +1,6 @@
-# Samelony — custom furniture, made to order
+# Aravelle — custom furniture, made to order
+
+_(Working name — the brand name lives in one place, `src/lib/brand.ts`, so it's a one-line change if you pick something else.)_
 
 A Next.js app for a custom-furniture dropshipping business: customers describe
 (and optionally sketch) the furniture they want, get an AI-assisted design

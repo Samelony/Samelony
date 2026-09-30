@@ -1,4 +1,4 @@
-export const ADMIN_COOKIE_NAME = "samelony_admin";
+export const ADMIN_COOKIE_NAME = "aravelle_admin";
 
 function getSecret(): string {
   const secret = process.env.ADMIN_SESSION_SECRET ?? process.env.ADMIN_PASSWORD;
